@@ -3,7 +3,7 @@ package com.west.smartfridge
 // 菜谱数据类
 data class Recipe(
     val name: String,
-    val requiredIngredients: List<String> // 只需要食材的名字
+    val requiredIngredients: List<String>
 )
 
 // 菜谱推荐器（本地贪心算法）
@@ -25,26 +25,20 @@ object RecipeRecommender {
      * 匹配度 = 已有的食材数量 / 菜谱需要的总食材数量
      */
     fun recommendRecipes(fridgeIngredients: List<Ingredient>): List<Pair<Recipe, Int>> {
-        // 把冰箱里的食材名字提取出来，方便匹配
         val fridgeNames = fridgeIngredients.map { it.name }
-
         val result = mutableListOf<Pair<Recipe, Int>>()
 
         for (recipe in allRecipes) {
-            // 计算这道菜里，有多少种食材我们已经有了
             val matchedCount = recipe.requiredIngredients.count { requiredName ->
                 fridgeNames.any { it.contains(requiredName) || requiredName.contains(it) }
             }
 
-            // 如果至少匹配了 1 种食材，就加入推荐列表
             if (matchedCount > 0) {
-                // 计算匹配百分比（匹配数 / 总需求数 * 100）
                 val matchScore = (matchedCount * 100) / recipe.requiredIngredients.size
                 result.add(Pair(recipe, matchScore))
             }
         }
 
-        // 按匹配度从高到低排序
         return result.sortedByDescending { it.second }
     }
 }
