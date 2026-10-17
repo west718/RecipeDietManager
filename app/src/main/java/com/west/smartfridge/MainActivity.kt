@@ -34,7 +34,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            // 【关键1】把深色模式的状态放到这里，可以控制整个 App
             var isDarkMode by remember { mutableStateOf(false) }
 
             SmartFridgeTheme(darkTheme = isDarkMode) {
@@ -50,8 +49,8 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    isDarkMode: Boolean,             // 【关键2】接收深色模式状态
-    onDarkModeChange: (Boolean) -> Unit  // 【关键2】接收修改深色模式的回调
+    isDarkMode: Boolean,
+    onDarkModeChange: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
     val dbHelper = remember { IngredientDbHelper(context) }
@@ -60,7 +59,10 @@ fun MainScreen(
     var selectedItem by remember { mutableStateOf(navItems[0]) }
     var showAddScreen by remember { mutableStateOf(false) }
     var refreshTrigger by remember { mutableStateOf(0) }
+
+    // 【新增】菜谱详情页的状态
     var selectedIngredient by remember { mutableStateOf<Ingredient?>(null) }
+    var selectedRecipe by remember { mutableStateOf<Recipe?>(null) }
 
     // 加载态
     var isLoading by remember { mutableStateOf(true) }
@@ -82,7 +84,9 @@ fun MainScreen(
 
     val ingredientList = remember(refreshTrigger) { dbHelper.getAllIngredients() }
 
+    // ================= 页面跳转逻辑 =================
     if (selectedIngredient != null) {
+        // 食材详情页
         IngredientDetailScreen(
             ingredient = selectedIngredient!!,
             onEat = {
@@ -92,7 +96,14 @@ fun MainScreen(
             },
             onBack = { selectedIngredient = null }
         )
+    } else if (selectedRecipe != null) {
+        // 【新增】菜谱详情页
+        RecipeDetailScreen(
+            recipe = selectedRecipe!!,
+            onBack = { selectedRecipe = null }
+        )
     } else if (showAddScreen) {
+        // 添加食材页
         AddIngredientScreen(
             onSave = { ingredient ->
                 dbHelper.addIngredient(ingredient)
@@ -102,6 +113,7 @@ fun MainScreen(
             onBack = { showAddScreen = false }
         )
     } else {
+        // 主界面 Scaffold ...
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -244,7 +256,12 @@ fun MainScreen(
                                         Text(text = "根据你的食材，为你推荐以下菜谱：", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
                                     }
                                     items(recommended) { (recipe, score) ->
-                                        Card(modifier = Modifier.fillMaxWidth()) {
+                                        // 【修改】给卡片加上点击事件，跳转到菜谱详情页
+                                        Card(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable { selectedRecipe = recipe }
+                                        ) {
                                             Column(modifier = Modifier.padding(16.dp)) {
                                                 Text(text = recipe.name, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
                                                 Text(text = "匹配度：$score%", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.secondary)
@@ -290,7 +307,6 @@ fun MainScreen(
                                             Text(text = "🌙 深色模式", style = MaterialTheme.typography.titleMedium)
                                             Text(text = "切换全局主题风格", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
                                         }
-                                        // 【关键3】Switch 直接调用外部传入的回调，切换整个 App 的主题
                                         Switch(
                                             checked = isDarkMode,
                                             onCheckedChange = {
