@@ -19,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -60,7 +61,6 @@ fun MainScreen(
     var showAddScreen by remember { mutableStateOf(false) }
     var refreshTrigger by remember { mutableStateOf(0) }
 
-    // 【新增】菜谱详情页的状态
     var selectedIngredient by remember { mutableStateOf<Ingredient?>(null) }
     var selectedRecipe by remember { mutableStateOf<Recipe?>(null) }
 
@@ -86,7 +86,6 @@ fun MainScreen(
 
     // ================= 页面跳转逻辑 =================
     if (selectedIngredient != null) {
-        // 食材详情页
         IngredientDetailScreen(
             ingredient = selectedIngredient!!,
             onEat = {
@@ -97,13 +96,11 @@ fun MainScreen(
             onBack = { selectedIngredient = null }
         )
     } else if (selectedRecipe != null) {
-        // 【新增】菜谱详情页
         RecipeDetailScreen(
             recipe = selectedRecipe!!,
             onBack = { selectedRecipe = null }
         )
     } else if (showAddScreen) {
-        // 添加食材页
         AddIngredientScreen(
             onSave = { ingredient ->
                 dbHelper.addIngredient(ingredient)
@@ -113,7 +110,6 @@ fun MainScreen(
             onBack = { showAddScreen = false }
         )
     } else {
-        // 主界面 Scaffold ...
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -158,39 +154,77 @@ fun MainScreen(
                                 val filteredList = if (selectedCategory == "全部") ingredientList
                                 else ingredientList.filter { it.category == selectedCategory }
 
-                                val threeDaysLater = System.currentTimeMillis() + 3 * 24 * 60 * 60 * 1000L
-                                val expiringSoon = ingredientList.filter {
-                                    it.expirationDate in System.currentTimeMillis()..threeDaysLater
-                                }
+                                val now = System.currentTimeMillis()
+                                val threeDaysLater = now + 3 * 24 * 60 * 60 * 1000L
+
+                                // 统计已过期和即将过期
+                                val expiredList = ingredientList.filter { it.expirationDate < now }
+                                val expiringSoon = ingredientList.filter { it.expirationDate in now..threeDaysLater }
+
                                 val totalQuantity = ingredientList.sumOf { it.quantity }
                                 val categoryStats = ingredientList.groupBy { it.category }.mapValues { it.value.size }
 
                                 Column(modifier = Modifier.fillMaxSize()) {
-                                    // 数据看板
+                                    // ===== 升级版数据看板 =====
                                     Card(
                                         modifier = Modifier.fillMaxWidth().padding(16.dp),
                                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
                                     ) {
                                         Column(modifier = Modifier.padding(16.dp)) {
                                             Text(text = "📊 冰箱数据看板", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Spacer(modifier = Modifier.height(12.dp))
+
+                                            // 四格数据统计
                                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                                     Text(text = "${ingredientList.size}", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
-                                                    Text(text = "食材种类", style = MaterialTheme.typography.bodySmall)
+                                                    Text(text = "总种类", style = MaterialTheme.typography.bodySmall)
                                                 }
                                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                                     Text(text = "$totalQuantity", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
-                                                    Text(text = "食材总数", style = MaterialTheme.typography.bodySmall)
+                                                    Text(text = "总数量", style = MaterialTheme.typography.bodySmall)
                                                 }
                                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                                    Text(text = "${expiringSoon.size}", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.error)
-                                                    Text(text = "即将过期", style = MaterialTheme.typography.bodySmall)
+                                                    Text(text = "${expiredList.size}", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.error)
+                                                    Text(text = "已过期", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                                                }
+                                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                    Text(text = "${expiringSoon.size}", style = MaterialTheme.typography.headlineMedium, color = Color(0xFFF57C00))
+                                                    Text(text = "快过期", style = MaterialTheme.typography.bodySmall, color = Color(0xFFF57C00))
                                                 }
                                             }
+
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f))
+                                            Spacer(modifier = Modifier.height(12.dp))
+
+                                            // 已过期食材名单
+                                            if (expiredList.isNotEmpty()) {
+                                                Text(
+                                                    text = "🚨 已过期：${expiredList.joinToString("、") { it.name }}",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.error
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                            }
+
+                                            // 即将过期食材名单
+                                            if (expiringSoon.isNotEmpty()) {
+                                                Text(
+                                                    text = "⚠️ 快过期：${expiringSoon.joinToString("、") { it.name }}",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = Color(0xFFF57C00)
+                                                )
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                            }
+
+                                            // 分类统计
                                             if (categoryStats.isNotEmpty()) {
-                                                Spacer(modifier = Modifier.height(8.dp))
-                                                Text(text = "分类：" + categoryStats.entries.joinToString("  ") { "${it.key} ${it.value}" }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                                Text(
+                                                    text = "分类：" + categoryStats.entries.joinToString("  ") { "${it.key} ${it.value}" },
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                                )
                                             }
                                         }
                                     }
@@ -256,7 +290,6 @@ fun MainScreen(
                                         Text(text = "根据你的食材，为你推荐以下菜谱：", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
                                     }
                                     items(recommended) { (recipe, score) ->
-                                        // 【修改】给卡片加上点击事件，跳转到菜谱详情页
                                         Card(
                                             modifier = Modifier
                                                 .fillMaxWidth()
