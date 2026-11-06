@@ -45,13 +45,21 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
 
-    // 【新增 1】图标扩展库（底部导航栏要用）
+    // 图标扩展库（底部导航栏要用）
     implementation("androidx.compose.material:material-icons-extended")
 
-    // 【新增 2】Room 数据库（用 annotationProcessor，稳定不报错）
+    // Room 数据库
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     annotationProcessor("androidx.room:room-compiler:2.6.1")
+
+    // ================== 【高保真 UI 与网络请求 新增依赖】 ==================
+    // 1. 网络请求库 Retrofit 和 Gson
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    // 2. 网络图片加载库 Coil
+    implementation("io.coil-kt:coil-compose:2.4.0")
+    // ======================================================================
 
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))

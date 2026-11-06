@@ -3,45 +3,79 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp"
-    android:background="#FFFFFF">
+    android:background="@drawable/widget_bg"
+    android:padding="16dp">
+    <!-- 注意：这里引用了 @drawable/widget_bg，我们下一步马上建它 -->
 
-    <TextView
-        android:id="@+id/widget_title"
+    <!-- 顶部：标题 + 数量 -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="🧊 我的冰箱"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:textColor="#333333" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
-    <TextView
-        android:id="@+id/widget_count"
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="🧊 我的冰箱"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#1E1E1E" />
+
+        <TextView
+            android:id="@+id/widget_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="共 0 种"
+            android:textSize="12sp"
+            android:textColor="#4A90E2"
+            android:background="#D6E4F0"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="2dp" />
+    </LinearLayout>
+
+    <!-- 刷新按钮放在单独一行，并靠右对齐，显得更整洁 -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="共 0 种"
-        android:textSize="12sp"
-        android:textColor="#2196F3"
-        android:layout_marginTop="4dp" />
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:layout_marginTop="4dp">
 
+        <TextView
+            android:id="@+id/widget_refresh"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🔄"
+            android:textSize="14sp"
+            android:padding="4dp" />
+    </LinearLayout>
+
+    <!-- 中间：预警信息 -->
     <TextView
         android:id="@+id/widget_content"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:text="加载中..."
-        android:textSize="12sp"
+        android:textSize="13sp"
         android:textColor="#666666"
+        android:lineSpacingExtra="6dp"
         android:layout_marginTop="8dp" />
 
+    <!-- 底部：推荐卡片 -->
     <TextView
         android:id="@+id/widget_recommend"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="🍳 推荐菜谱：加载中..."
-        android:textSize="12sp"
+        android:textSize="13sp"
         android:textColor="#E65100"
         android:textStyle="bold"
+        android:background="#FFF3E0"
+        android:padding="8dp"
         android:layout_marginTop="8dp" />
 
 </LinearLayout>
